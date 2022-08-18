@@ -4,42 +4,30 @@
 #include <sstream>
 #include "time.h"
 
-class Talker
+
+void answercb(const std_msgs::Int64::ConstPtr& msg)
 {
-  ros::NodeHandlePtr node_;
-  ros::Subscriber sub_;
-  ros::Publisher pub_;
-  ros::Timer timer_;
-
-public:
-  void timercb(const ros::TimerEvent& event)
-  {
-    std_msgs::Int64 msg;
-    msg.data = get_epoch_usec();
-    pub_.publish(msg);
-  }
-
-  void answercb(const std_msgs::Int64::ConstPtr& msg)
-  {
-    int64_t value = msg->data;
-    std::cout << "ellapsed " << get_epoch_usec() - value << "usec" << std::endl;
-  }
-
-  Talker()
-  {
-    node_.reset(new ros::NodeHandle("talker"));
-    sub_ = node_->subscribe("echoout", 1, &Talker::answercb, this);
-    pub_ = node_->advertise<std_msgs::Int64>("echoinp", 10);
-    timer_ = node_->createTimer(1.0, &Talker::timercb, this, false, true);
-    timer_.setPeriod(ros::Duration(0.1));
-    timer_.start();
-  }
-};
+  int64_t value = msg->data;
+  std::cout << "ellapsed " << get_epoch_usec() - value << "usec" << std::endl;
+}
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "talker");
-  Talker talker;
-  ros::spin();
+  ros::NodeHandle node;
+  ros::Publisher pub = node.advertise<std_msgs::Int64>("echoinp", 1);
+  ros::Subscriber sub = node.subscribe("echoout", 1, answercb);
+  ros::Rate rate(100);
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  while (ros::ok())
+  {
+    std_msgs::Int64 msg;
+    msg.data = get_epoch_usec();
+    pub.publish(msg);
+    rate.sleep();
+  }
+
   return 0;
 }

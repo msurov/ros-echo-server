@@ -22,7 +22,7 @@ public:
     EchoServer()
     {
         sub_ = node_.subscribe("echoinp", 1, &EchoServer::cb, this);
-        pub_ = node_.advertise<std_msgs::Int64>("echoout", 10);
+        pub_ = node_.advertise<std_msgs::Int64>("echoout", 1);
     }
 };
 
